@@ -75944,7 +75944,7 @@ void main() {
   }
   function assertBridge() {
     if (!window.DXFAPP || typeof window.DXFAPP.ping !== "function") {
-      setStatus("Error: preload bridge (DXFAPP) \u043D\u0435 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u043B\u0441\u044F. \u041F\u0440\u043E\u0432\u0435\u0440\u044C main.js \u2192 webPreferences.preload.");
+      setStatus("Error: preload bridge (DXFAPP) failed to load. Check main.js -> webPreferences.preload.");
       if (openBtn)
         openBtn.disabled = true;
       if (openBtnStart)
@@ -76342,7 +76342,7 @@ void main() {
     } else if (typeof v.loadDxf === "function") {
       await v.loadDxf(url);
     } else {
-      throw new Error("\u041D\u0435 \u043D\u0430\u0448\u0451\u043B \u043C\u0435\u0442\u043E\u0434 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0443 viewer (Load/load/loadDxf).");
+      throw new Error("No supported viewer load method found (Load/load/loadDxf).");
     }
     resizeViewerIfPossible();
     await fitToViewIfPossible();
@@ -76359,7 +76359,7 @@ void main() {
       drawRulers();
       setStatus(lastLoadedPath ? `Loaded: ${lastLoadedPath}` : "Loaded");
     } else {
-      setStatus("\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438 .dxf \u0438\u043B\u0438 \u043D\u0430\u0436\u043C\u0438 Open.");
+      setStatus("Drag and drop a .dxf file or click Open.");
       drawRulers();
     }
   }
@@ -76372,7 +76372,7 @@ void main() {
       setStatus(`Loading: ${filePath}`);
       const text = await window.DXFAPP.readDxf(filePath);
       if (!text) {
-        setStatus("\u041D\u0435 \u0441\u043C\u043E\u0433 \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0444\u0430\u0439\u043B.");
+        setStatus("Failed to read file.");
         return;
       }
       lastLoadedPath = filePath;
@@ -76402,7 +76402,7 @@ void main() {
       if (p)
         await loadDxfFromPath(p);
       else if (hasLoadedFile)
-        setStatus("\u041E\u0442\u043C\u0435\u043D\u0435\u043D\u043E.");
+        setStatus("Canceled.");
     } catch (e) {
       console.error(e);
       setStatus(`Error: ${e?.message || e}`);
@@ -76447,7 +76447,7 @@ void main() {
     if (f?.path && f.path.toLowerCase().endsWith(".dxf")) {
       loadDxfFromPath(f.path);
     } else {
-      setStatus("Drop \u0438\u043C\u0435\u043D\u043D\u043E .dxf \u0444\u0430\u0439\u043B.");
+      setStatus("Please drop a .dxf file.");
     }
   });
   var resizeRaf = 0;
@@ -76486,7 +76486,7 @@ void main() {
   }
   if (assertBridge()) {
     setUiHasFile(false);
-    setStatus("\u041F\u0435\u0440\u0435\u0442\u0430\u0449\u0438 .dxf \u0438\u043B\u0438 \u043D\u0430\u0436\u043C\u0438 Open.");
+    setStatus("Drag and drop a .dxf file or click Open.");
   }
 })();
 /*! Bundled license information:

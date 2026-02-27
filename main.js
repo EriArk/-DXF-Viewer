@@ -2,7 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
-// Если будут проблемы с WebGL на Linux — раскомментируй:
+// If you hit WebGL issues on Linux, uncomment:
 // app.commandLine.appendSwitch("use-gl", "swiftshader");
 // app.commandLine.appendSwitch("ignore-gpu-blacklist");
 
@@ -14,7 +14,7 @@ function createWindow() {
     height: 800,
     backgroundColor: "#111",
 
-    // убираем верхнюю полоску File/Edit/View...
+    // hide top File/Edit/View menu bar
     autoHideMenuBar: true,
 
     webPreferences: {
@@ -25,7 +25,7 @@ function createWindow() {
     }
   });
 
-  // на всякий случай — полностью прячем меню окна
+  // ensure window menu is hidden
   win.setMenuBarVisibility(false);
   win.removeMenu();
 
@@ -66,7 +66,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    // убираем Application Menu (File/Edit/View...) на Linux/Windows
+    // remove application menu (File/Edit/View...) on Linux/Windows
     if (process.platform !== "darwin") {
       Menu.setApplicationMenu(null);
     }
@@ -91,7 +91,7 @@ app.on("open-file", (event, filePath) => {
   handleOpenPath(filePath);
 });
 
-// Диалог выбора DXF
+// Open DXF file dialog
 ipcMain.handle("pick-dxf", async () => {
   const res = await dialog.showOpenDialog({
     properties: ["openFile"],
@@ -102,9 +102,8 @@ ipcMain.handle("pick-dxf", async () => {
   return res.filePaths[0];
 });
 
-// Чтение DXF (текстовый)
+// Read DXF file as text
 ipcMain.handle("read-dxf", async (_evt, filePath) => {
   if (!filePath) return null;
   return fs.readFileSync(filePath, "utf8");
 });
-

@@ -241,10 +241,10 @@ function isEditableTarget(target) {
 async function switchTheme(next) {
   if (currentTheme() === next) return;
   setTheme(next);
-  // На welcome-экране viewer ещё не нужен: просто переключаем тему UI.
+  // On the welcome screen we only need UI theme switching.
   if (!hasLoadedFile && !lastLoadedText) return;
 
-  // При открытом файле пересоздаём viewer с нужными цветами.
+  // Recreate viewer with proper colors when a file is already loaded.
   try {
     await rebuildViewerAndRedraw();
   } catch (e) {
@@ -891,7 +891,7 @@ function updateMeasureInfo() {
 
 function assertBridge() {
   if (!window.DXFAPP || typeof window.DXFAPP.ping !== "function") {
-    setStatus("Error: preload bridge (DXFAPP) не загрузился. Проверь main.js → webPreferences.preload.");
+    setStatus("Error: preload bridge (DXFAPP) failed to load. Check main.js -> webPreferences.preload.");
     if (openBtn) openBtn.disabled = true;
     if (openBtnStart) openBtnStart.disabled = true;
     return false;
@@ -1112,15 +1112,15 @@ function drawRulers() {
 /* ---------------- Viewer Colors ---------------- */
 
 function viewerColorsForTheme(theme) {
-  // ✅ ВАЖНО: dxf-viewer ожидает Color-объекты (THREE.Color), а не числа.
+  // Important: dxf-viewer expects Color objects (THREE.Color), not numbers.
   if (theme === "light") {
-    // чёрные линии на белом фоне
+    // Dark lines on white background
     return {
       clearColor: new Color("#ffffff"),
       color: new Color("#000000"),
     };
   }
-  // белые линии на тёмном фоне
+  // White lines on dark background
   return {
     clearColor: new Color("#0d0d0d"),
     color: new Color("#ffffff"),
@@ -1134,14 +1134,14 @@ function createFreshViewer() {
   if (dxfViewer && typeof dxfViewer.Destroy === "function") {
     try { dxfViewer.Destroy(); } catch (_) {}
   }
-  // Убираем старые canvas, но сохраняем overlay с направляющими.
+  // Remove stale canvases but keep guides overlay.
   const staleCanvases = viewerEl.querySelectorAll("canvas");
   for (const c of staleCanvases) c.remove();
 
   const theme = currentTheme();
   const { clearColor, color } = viewerColorsForTheme(theme);
 
-  // Создаём новый viewer
+  // Create fresh viewer
   dxfViewer = new DxfViewer(viewerEl, {
     clearColor,
     color,
@@ -1156,14 +1156,14 @@ function createFreshViewer() {
     });
   }
 
-  // canvas всегда на весь контейнер
+  // Keep canvas stretched to container
   const canvas = viewerEl.querySelector("canvas");
   if (canvas) {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
   }
-  // Гарантируем, что overlay находится поверх canvas.
+  // Ensure overlay is always above canvas.
   if (measureOverlayEl && measureOverlayEl.parentElement === viewerEl) {
     viewerEl.appendChild(measureOverlayEl);
   }
@@ -1290,7 +1290,7 @@ async function loadTextIntoViewer(text) {
   } else if (typeof v.loadDxf === "function") {
     await v.loadDxf(url);
   } else {
-    throw new Error("Не нашёл метод загрузки у viewer (Load/load/loadDxf).");
+    throw new Error("No supported viewer load method found (Load/load/loadDxf).");
   }
 
   resizeViewerIfPossible();
@@ -1309,7 +1309,7 @@ async function rebuildViewerAndRedraw() {
     drawRulers();
     setStatus(lastLoadedPath ? `Loaded: ${lastLoadedPath}` : "Loaded");
   } else {
-    setStatus("Перетащи .dxf или нажми Open.");
+    setStatus("Drag and drop a .dxf file or click Open.");
     drawRulers();
   }
 }
@@ -1324,14 +1324,14 @@ async function loadDxfFromPath(filePath) {
 
     const text = await window.DXFAPP.readDxf(filePath);
     if (!text) {
-      setStatus("Не смог прочитать файл.");
+      setStatus("Failed to read file.");
       return;
     }
 
     lastLoadedPath = filePath;
     lastLoadedText = text;
 
-    // Важно: показываем shell до загрузки, иначе viewer получает размер 1x1.
+    // Show shell before loading to avoid 1x1 viewer size.
     if (!wasHasFile) {
       setUiHasFile(true);
       await new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -1358,7 +1358,7 @@ async function openDxfDialog() {
     const p = await window.DXFAPP.pickDxf();
 
     if (p) await loadDxfFromPath(p);
-    else if (hasLoadedFile) setStatus("Отменено.");
+    else if (hasLoadedFile) setStatus("Canceled.");
   } catch (e) {
     console.error(e);
     setStatus(`Error: ${e?.message || e}`);
@@ -1400,7 +1400,7 @@ window.addEventListener("drop", (e) => {
   if (f?.path && f.path.toLowerCase().endsWith(".dxf")) {
     loadDxfFromPath(f.path);
   } else {
-    setStatus("Drop именно .dxf файл.");
+    setStatus("Please drop a .dxf file.");
   }
 });
 
@@ -1450,5 +1450,5 @@ if (window.DXFAPP && typeof window.DXFAPP.onOpenPath === "function") {
 
 if (assertBridge()) {
   setUiHasFile(false);
-  setStatus("Перетащи .dxf или нажми Open.");
+  setStatus("Drag and drop a .dxf file or click Open.");
 }
