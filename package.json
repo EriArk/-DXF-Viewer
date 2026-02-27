@@ -26,7 +26,7 @@
   },
   "build": {
     "appId": "local.dxf.viewer",
-    "productName": "🦊 DXF Viewer",
+    "productName": "DXF Viewer",
     "icon": "icon.png",
     "linux": {
       "target": [
@@ -34,7 +34,12 @@
         "deb"
       ],
       "category": "Graphics",
-      "maintainer": "Abyss Tail <abysstailcrafts@gmail.com>"
+      "maintainer": "Abyss Tail <abysstailcrafts@gmail.com>",
+      "icon": "build/icons",
+      "desktop": {
+        "Name": "DXF Viewer",
+        "StartupWMClass": "dxf-viewer-local-app"
+      }
     },
     "fileAssociations": [
       {
