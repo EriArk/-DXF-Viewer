@@ -2,6 +2,7 @@
   "name": "dxf-viewer-local-app",
   "version": "1.0.0",
   "description": "Local DXF viewer (Electron) bundled with esbuild",
+  "license": "MIT",
   "homepage": "https://abysstail.art",
   "author": {
     "name": "Abyss Tail",
