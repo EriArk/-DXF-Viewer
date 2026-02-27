@@ -1,0 +1,46 @@
+{
+  "name": "dxf-viewer-local-app",
+  "version": "1.0.0",
+  "description": "Local DXF viewer (Electron) bundled with esbuild",
+  "homepage": "https://abysstail.art",
+  "author": {
+    "name": "Abyss Tail",
+    "email": "abysstailcrafts@gmail.com"
+  },
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build:renderer": "esbuild renderer-src.js --bundle --platform=browser --format=iife --outfile=renderer.js",
+    "start": "npm run build:renderer && electron .",
+    "dist": "npm run build:renderer && electron-builder"
+  },
+  "dependencies": {
+    "dxf-viewer": "^1.0.0",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0",
+    "esbuild": "^0.20.0"
+  },
+  "build": {
+    "appId": "local.dxf.viewer",
+    "productName": "🦊 DXF Viewer",
+    "icon": "icon.png",
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Graphics",
+      "maintainer": "Abyss Tail <abysstailcrafts@gmail.com>"
+    },
+    "fileAssociations": [
+      {
+        "ext": "dxf",
+        "name": "DXF Drawing",
+        "role": "Viewer"
+      }
+    ]
+  }
+}

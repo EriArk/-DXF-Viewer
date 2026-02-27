@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self';
+          script-src 'self';
+          style-src 'self' 'unsafe-inline';
+          img-src 'self' data: blob:;
+          font-src 'self' data: blob:;
+          connect-src 'self' data: blob:;
+          worker-src 'self' blob:;
+        ">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🦊 DXF Viewer</title>
+
+  <style>
+    :root{
+      --window-bg: #f6f5f4;
+      --surface:   #ffffff;
+      --surface-2: #f2f2f2;
+      --text:      #1e1e1e;
+      --muted:     #5e5c64;
+      --border:    #deddda;
+
+      --accent:    #3584e4;
+      --accent-txt:#ffffff;
+
+      --shadow:    0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
+      --ruler-bg:  #f1f1f1;
+      --ruler-line:#c7c7c7;
+      --ruler-text:#5e5c64;
+
+      /* ✅ В СВЕТЛОЙ теме: белый фон под черные линии */
+      --viewer-bg: #ffffff;
+      --drop-bg:   rgba(246,245,244,0.78);
+    }
+
+    :root[data-theme="dark"]{
+      --window-bg: #1e1e1e;
+      --surface:   #2b2b2b;
+      --surface-2: #323232;
+      --text:      #f6f5f4;
+      --muted:     #c0bfbc;
+      --border:    #3a3a3a;
+
+      --accent:    #3584e4;
+      --accent-txt:#ffffff;
+
+      --shadow:    0 1px 2px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.35);
+      --ruler-bg:  #242424;
+      --ruler-line:#4a4a4a;
+      --ruler-text:#c0bfbc;
+
+      /* ✅ В ТЁМНОЙ теме: тёмный фон */
+      --viewer-bg: #0d0d0d;
+      --drop-bg:   rgba(30,30,30,0.72);
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--window-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+      overflow: hidden;
+    }
+
+    body[data-has-file="false"] #app-shell { display: none; }
+    body[data-has-file="true"] #welcome { display: none; }
+
+    #app-shell {
+      width: 100%;
+      height: 100%;
+    }
+
+    #welcome {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    #welcome-toolbar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+
+    #welcome-card {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      padding: 10px;
+      min-width: 280px;
+    }
+
+    #openBtnStart {
+      background: var(--accent);
+      color: var(--accent-txt);
+      border-color: rgba(0,0,0,.10);
+      box-shadow: 0 1px 0 rgba(255,255,255,.20) inset;
+      font-size: 16px;
+      padding: 12px 20px;
+    }
+    #openBtnStart:hover { filter: brightness(1.03); }
+    #openBtnStart:active { filter: brightness(0.97); }
+
+    #welcome-sub {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    #topbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      box-sizing: border-box;
+
+      height: 58px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    button {
+      appearance: none;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      line-height: 1;
+      box-shadow: 0 1px 0 rgba(255,255,255,.10) inset;
+    }
+    button:hover { background: var(--surface-2); }
+    button:active { filter: brightness(0.97); }
+    button:disabled { cursor: default; opacity: 0.6; }
+
+    #openBtn {
+      background: var(--accent);
+      color: var(--accent-txt);
+      border-color: rgba(0,0,0,.10);
+      box-shadow: 0 1px 0 rgba(255,255,255,.20) inset;
+    }
+    #openBtn:hover { filter: brightness(1.03); }
+    #openBtn:active { filter: brightness(0.97); }
+
+    #settingsWrap {
+      position: relative;
+    }
+    #settingsBtn {
+      padding: 9px 12px;
+      min-width: 44px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    #settingsMenu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 10px;
+      box-sizing: border-box;
+      z-index: 30;
+      display: none;
+      gap: 10px;
+    }
+    #settingsWrap[data-open="true"] #settingsMenu {
+      display: grid;
+    }
+    .menuSection {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+    }
+    .menuLabel {
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: .2px;
+      justify-self: stretch;
+      text-align: center;
+    }
+    #menuActions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .menuActionBtn {
+      width: 100%;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+    #lineThicknessSlider {
+      width: 150px;
+      accent-color: var(--accent);
+    }
+    #lineLevel {
+      color: var(--muted);
+      font-size: 11px;
+      min-width: 26px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    #themeSelect {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .themePickBtn {
+      width: 100%;
+      padding: 8px 0;
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 0;
+    }
+    .themePickBtn[data-active="true"] {
+      background: var(--accent);
+      color: var(--accent-txt);
+      border-color: rgba(0,0,0,.12);
+    }
+    #themeBtnStart {
+      padding: 9px 12px;
+      min-width: 44px;
+    }
+
+    #status {
+      color: var(--muted);
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 75vw;
+    }
+    #rulerBtn {
+      min-width: 44px;
+      padding: 9px 12px;
+      font-size: 16px;
+      line-height: 1;
+      transition: transform .22s ease;
+      will-change: transform;
+    }
+    #settingsWrap {
+      margin-left: -4px;
+    }
+    #rulerPanel {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 7px 10px;
+      max-width: 460px;
+      overflow: hidden;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition:
+        max-width .22s ease,
+        opacity .18s ease,
+        padding .22s ease,
+        border-color .22s ease;
+    }
+    #guideToggleWrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      user-select: none;
+    }
+    #guideToggle {
+      margin: 0;
+      width: 14px;
+      height: 14px;
+      accent-color: var(--accent);
+    }
+    #snapToggleWrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      user-select: none;
+    }
+    #snapToggle {
+      margin: 0;
+      width: 14px;
+      height: 14px;
+      accent-color: var(--accent);
+    }
+    #measureInfo {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    #measureAcc {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
+    body[data-rulers="on"] #rulerBtn { transform: translateX(-8px); }
+    body[data-rulers="off"] #rulerBtn { transform: translateX(0); }
+    body[data-rulers="off"] #rulerPanel {
+      max-width: 0;
+      opacity: 0;
+      padding-left: 0;
+      padding-right: 0;
+      border-color: transparent;
+      pointer-events: none;
+    }
+
+    #viewer-wrap {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 58px);
+      background: var(--window-bg);
+      overflow: hidden;
+      box-sizing: border-box;
+      padding: 12px;
+    }
+
+    #viewer-frame {
+      position: absolute;
+      inset: 12px;
+      --ruler-size: 22px;
+    }
+    body[data-rulers="off"] #viewer-frame { --ruler-size: 0px; }
+
+    #viewer {
+      position: absolute;
+      top: var(--ruler-size);
+      left: var(--ruler-size);
+      right: 0;
+      bottom: 0;
+      background: var(--viewer-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    body[data-rulers="on"] #viewer {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    #viewer canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #measure-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .guide-line {
+      position: absolute;
+      background: rgba(53, 132, 228, 0.75);
+      opacity: 0.9;
+    }
+    .guide-line.v {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+    }
+    .guide-line.h {
+      left: 0;
+      right: 0;
+      height: 1px;
+    }
+    body[data-rulers="off"] #measure-overlay { display: none; }
+
+    #ruler-corner,
+    #ruler-top,
+    #ruler-left {
+      position: absolute;
+      display: none;
+      background: var(--ruler-bg);
+      border: 1px solid var(--ruler-line);
+      box-sizing: border-box;
+    }
+    body[data-rulers="on"] #ruler-corner,
+    body[data-rulers="on"] #ruler-top,
+    body[data-rulers="on"] #ruler-left {
+      display: block;
+    }
+
+    #ruler-corner {
+      top: 0;
+      left: 0;
+      width: var(--ruler-size);
+      height: var(--ruler-size);
+      border-radius: 10px 0 0 0;
+    }
+    #ruler-top {
+      top: 0;
+      left: var(--ruler-size);
+      width: calc(100% - var(--ruler-size));
+      height: var(--ruler-size);
+      border-radius: 0 10px 0 0;
+    }
+    #ruler-left {
+      top: var(--ruler-size);
+      left: 0;
+      width: var(--ruler-size);
+      height: calc(100% - var(--ruler-size));
+      border-radius: 0 0 0 10px;
+    }
+    #ruler-top,
+    #ruler-left {
+      padding: 0;
+      margin: 0;
+      background: var(--ruler-bg);
+      pointer-events: auto;
+      cursor: col-resize;
+    }
+    #ruler-left { cursor: row-resize; }
+
+    #drop {
+      position: absolute;
+      inset: 12px;
+      display: none;
+      place-items: center;
+      background: var(--drop-bg);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 18px;
+      text-align: center;
+      z-index: 10;
+    }
+    #drop.visible { display: grid; }
+
+    #drop > div {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      max-width: 520px;
+      color: var(--text);
+    }
+
+    #drop .sub {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      opacity: 1;
+    }
+    #helpModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.28);
+      display: none;
+      place-items: center;
+      z-index: 60;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #helpModal[data-open="true"] { display: grid; }
+    #helpCard {
+      width: fit-content;
+      max-width: 92vw;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    #helpTitle {
+      font-size: 19px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    #helpKeys {
+      display: grid;
+      grid-template-columns: max-content max-content;
+      gap: 10px 12px;
+      align-items: start;
+      justify-content: start;
+    }
+    .hk {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 8px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .hd {
+      font-size: 15px;
+      color: var(--text);
+    }
+    #helpCloseBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+    #aboutModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.28);
+      display: none;
+      place-items: center;
+      z-index: 60;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #aboutModal[data-open="true"] { display: grid; }
+    #aboutCard {
+      width: min(520px, 94vw);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      box-sizing: border-box;
+      position: relative;
+      display: grid;
+      gap: 12px;
+    }
+    #aboutTitle {
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+    }
+    #aboutBrand {
+      display: grid;
+      justify-items: center;
+      text-align: center;
+      gap: 10px;
+      padding-right: 0;
+    }
+    #aboutLogo {
+      width: 76px;
+      height: 76px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      object-fit: contain;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .aboutBrandMain {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+    }
+    .aboutBrandSub {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    #aboutSections {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+    .aboutSection {
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 7px;
+      width: min(440px, 100%);
+      box-sizing: border-box;
+    }
+    .aboutSectionTitle {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .2px;
+      text-align: center;
+    }
+    .aboutLine {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .aboutMuted {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+    #aboutCloseBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      min-width: 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+  </style>
+</head>
+
+<body data-has-file="false">
+  <div id="welcome">
+    <div id="welcome-toolbar">
+      <button id="themeBtnStart" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+    </div>
+    <div id="welcome-card">
+      <button id="openBtnStart">Open DXF…</button>
+      <div id="welcome-sub">Перетащи .dxf сюда или нажми Open DXF…</div>
+    </div>
+  </div>
+
+  <div id="app-shell">
+    <div id="topbar">
+      <button id="openBtn">Open</button>
+      <div id="status">Перетащи .dxf сюда или нажми Open.</div>
+
+      <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+        <button id="rulerBtn" title="Toggle rulers" aria-label="Toggle rulers">📏</button>
+        <div id="rulerPanel">
+          <div id="measureInfo">ΔX: - mm | ΔY: - mm</div>
+          <div id="measureAcc">±0.02 mm</div>
+          <label id="snapToggleWrap" title="Snap guides to drawing edges">
+            <input id="snapToggle" type="checkbox" checked />
+            <span>Snap</span>
+          </label>
+          <label id="guideToggleWrap" title="Show marker guide lines">
+            <input id="guideToggle" type="checkbox" checked />
+            <span>Guides</span>
+          </label>
+        </div>
+        <div id="settingsWrap" data-open="false">
+          <button id="settingsBtn" title="Settings" aria-label="Settings">⚙</button>
+          <div id="settingsMenu">
+            <div class="menuSection">
+              <div class="menuLabel">Theme</div>
+              <div id="themeSelect">
+                <button id="themeLightBtn" class="themePickBtn" type="button">Light</button>
+                <button id="themeDarkBtn" class="themePickBtn" type="button">Dark</button>
+              </div>
+            </div>
+            <div class="menuSection">
+              <div class="menuLabel">Line Thickness</div>
+              <div style="display:grid; gap:6px; justify-items:center;">
+                <input id="lineThicknessSlider" type="range" min="1" max="5" step="1" value="1" aria-label="Line thickness slider" />
+                <div id="lineLevel">1x</div>
+              </div>
+            </div>
+            <div class="menuSection">
+              <div id="menuActions">
+                <button id="helpBtn" class="menuActionBtn" type="button">Help</button>
+                <button id="aboutBtn" class="menuActionBtn" type="button">About</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewer-wrap">
+      <div id="viewer-frame">
+        <div id="ruler-corner" aria-hidden="true"></div>
+        <canvas id="ruler-top" aria-hidden="true"></canvas>
+        <canvas id="ruler-left" aria-hidden="true"></canvas>
+        <div id="viewer">
+          <div id="measure-overlay" aria-hidden="true">
+            <div id="guide-v1" class="guide-line v"></div>
+            <div id="guide-v2" class="guide-line v"></div>
+            <div id="guide-h1" class="guide-line h"></div>
+            <div id="guide-h2" class="guide-line h"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="drop">
+        <div>
+          Перетащи сюда <b>.dxf</b>
+          <div class="sub">или нажми кнопку <b>Open DXF…</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpModal" data-open="false" aria-hidden="true">
+    <div id="helpCard" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <button id="helpCloseBtn" type="button" aria-label="Close">×</button>
+      <div id="helpTitle">Keyboard Shortcuts</div>
+      <div id="helpKeys">
+        <div class="hk">Ctrl+O</div><div class="hd">Open DXF file</div>
+        <div class="hk">Ctrl+,</div><div class="hd">Toggle Settings menu</div>
+        <div class="hk">Ctrl+R</div><div class="hd">Toggle rulers</div>
+        <div class="hk">Ctrl+F</div><div class="hd">Fit drawing to view</div>
+        <div class="hk">Ctrl+= / Ctrl+-</div><div class="hd">Line thickness up/down</div>
+        <div class="hk">Ctrl+T</div><div class="hd">Toggle theme</div>
+        <div class="hk">Ctrl+X</div><div class="hd">Close application window</div>
+        <div class="hk">F1</div><div class="hd">Open this Help</div>
+      </div>
+    </div>
+  </div>
+  <div id="aboutModal" data-open="false" aria-hidden="true">
+    <div id="aboutCard" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <button id="aboutCloseBtn" type="button" aria-label="Close">×</button>
+      <div id="aboutTitle">About</div>
+      <div id="aboutBrand">
+        <img id="aboutLogo" src="./assets/abyss-logo.png" alt="AbyssTail Designs logo" />
+        <div class="aboutBrandMain">AbyssTail Designs</div>
+        <div class="aboutBrandSub">Lazar Stafeev</div>
+        <div class="aboutBrandSub">🦊 DXF Viewer · Version 1.0.0</div>
+      </div>
+      <div id="aboutSections">
+        <div class="aboutSection">
+          <div class="aboutSectionTitle">Acknowledgements</div>
+          <div class="aboutLine">Special thanks to Artyom Lebedev, creator of the <code>dxf-viewer</code> library.</div>
+          <div class="aboutLine">This project uses his rendering foundation for core DXF visualization.</div>
+        </div>
+        <div class="aboutSection">
+          <div class="aboutSectionTitle">Open Source Licenses</div>
+          <div class="aboutLine">Electron: MIT License</div>
+          <div class="aboutLine">three.js: MIT License</div>
+          <div class="aboutLine">dxf-viewer: MPL-2.0 License</div>
+          <div class="aboutLine">esbuild: MIT License</div>
+        </div>
+      </div>
+      <div class="aboutMuted">© AbyssTail Designs</div>
+    </div>
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>
