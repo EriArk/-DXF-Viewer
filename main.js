@@ -91,7 +91,7 @@ app.on("open-file", (event, filePath) => {
   handleOpenPath(filePath);
 });
 
-// Open DXF file dialog
+// Open file dialog
 ipcMain.handle("pick-dxf", async () => {
   const res = await dialog.showOpenDialog({
     properties: ["openFile"],
@@ -102,8 +102,34 @@ ipcMain.handle("pick-dxf", async () => {
   return res.filePaths[0];
 });
 
-// Read DXF file as text
+// Open folder dialog
+ipcMain.handle("pick-folder", async () => {
+  const res = await dialog.showOpenDialog({
+    properties: ["openDirectory"]
+  });
+
+  if (res.canceled || !res.filePaths?.length) return null;
+  return res.filePaths[0];
+});
+
+// Read selected DXF file as text
 ipcMain.handle("read-dxf", async (_evt, filePath) => {
   if (!filePath) return null;
   return fs.readFileSync(filePath, "utf8");
+});
+
+// List DXF files in a folder
+ipcMain.handle("list-folder-dxf", async (_evt, folderPath) => {
+  if (!folderPath) return [];
+  let entries = [];
+  try {
+    entries = fs.readdirSync(folderPath, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".dxf"))
+    .map((entry) => path.join(folderPath, entry.name))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 });

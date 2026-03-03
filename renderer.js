@@ -75084,7 +75084,15 @@ void main() {
   var statusEl = document.getElementById("status");
   var openBtn = document.getElementById("openBtn");
   var openBtnStart = document.getElementById("openBtnStart");
+  var openFolderBtn = document.getElementById("openFolderBtn");
+  var openFolderBtnStart = document.getElementById("openFolderBtnStart");
   var dropEl = document.getElementById("drop");
+  var welcomeRecentFilesEl = document.getElementById("welcomeRecentFiles");
+  var welcomeRecentFoldersEl = document.getElementById("welcomeRecentFolders");
+  var sidebarRecentFilesEl = document.getElementById("sidebarRecentFiles");
+  var sidebarRecentFoldersEl = document.getElementById("sidebarRecentFolders");
+  var sidebarFolderPathEl = document.getElementById("sidebarFolderPath");
+  var sidebarFolderFilesEl = document.getElementById("sidebarFolderFiles");
   var settingsWrapEl = document.getElementById("settingsWrap");
   var settingsBtnEl = document.getElementById("settingsBtn");
   var settingsMenuEl = document.getElementById("settingsMenu");
@@ -75123,6 +75131,16 @@ void main() {
   var snapEnabled = true;
   var renderGl = null;
   var lineThicknessLevel = 0;
+  var recentFiles = [];
+  var recentFolders = [];
+  var recentFolderLastFile = {};
+  var currentFolderPath = "";
+  var currentFolderFiles = [];
+  var RECENT_FILES_KEY = "recentFiles";
+  var RECENT_FOLDERS_KEY = "recentFolders";
+  var RECENT_FOLDER_LAST_FILE_KEY = "recentFolderLastFile";
+  var MAX_RECENT_FILES = 12;
+  var MAX_RECENT_FOLDERS = 10;
   var markers = {
     top: [60, 220],
     left: [60, 220],
@@ -75130,6 +75148,215 @@ void main() {
     leftWorld: [null, null],
     dragging: null
   };
+  function pathCompareKey(pathValue) {
+    return String(pathValue || "").trim().replace(/\\/g, "/").toLowerCase();
+  }
+  function pathBaseName(pathValue) {
+    const raw = String(pathValue || "").trim().replace(/[\\/]+$/, "");
+    if (!raw)
+      return "";
+    const idx = Math.max(raw.lastIndexOf("/"), raw.lastIndexOf("\\"));
+    return idx >= 0 ? raw.slice(idx + 1) : raw;
+  }
+  function pathDirName(pathValue) {
+    const raw = String(pathValue || "").trim().replace(/[\\/]+$/, "");
+    if (!raw)
+      return "";
+    const idx = Math.max(raw.lastIndexOf("/"), raw.lastIndexOf("\\"));
+    if (idx <= 0)
+      return idx === 0 ? raw.slice(0, 1) : "";
+    return raw.slice(0, idx);
+  }
+  function loadRecentArray(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw)
+        return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed))
+        return [];
+      return parsed.map((v) => String(v || "").trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  }
+  function saveRecentArray(key, values) {
+    try {
+      localStorage.setItem(key, JSON.stringify(values));
+    } catch {
+    }
+  }
+  function loadRecentFolderLastFile() {
+    try {
+      const raw = localStorage.getItem(RECENT_FOLDER_LAST_FILE_KEY);
+      if (!raw)
+        return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+        return {};
+      const out = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        const key = String(k || "").trim();
+        const val = String(v || "").trim();
+        if (key && val)
+          out[key] = val;
+      }
+      return out;
+    } catch {
+      return {};
+    }
+  }
+  function saveRecentFolderLastFile() {
+    try {
+      localStorage.setItem(RECENT_FOLDER_LAST_FILE_KEY, JSON.stringify(recentFolderLastFile));
+    } catch {
+    }
+  }
+  function upsertRecentPath(list, nextPath, maxItems) {
+    const value = String(nextPath || "").trim();
+    if (!value)
+      return list;
+    const key = pathCompareKey(value);
+    const nextList = [value];
+    for (const p of list) {
+      if (pathCompareKey(p) !== key)
+        nextList.push(p);
+      if (nextList.length >= maxItems)
+        break;
+    }
+    return nextList;
+  }
+  function addRecentFolder(folderPath) {
+    const folder = String(folderPath || "").trim();
+    if (!folder)
+      return;
+    recentFolders = upsertRecentPath(recentFolders, folder, MAX_RECENT_FOLDERS);
+    saveRecentArray(RECENT_FOLDERS_KEY, recentFolders);
+  }
+  function addRecentFile(filePath) {
+    const file = String(filePath || "").trim();
+    if (!file)
+      return;
+    recentFiles = upsertRecentPath(recentFiles, file, MAX_RECENT_FILES);
+    saveRecentArray(RECENT_FILES_KEY, recentFiles);
+    const folder = pathDirName(file);
+    if (folder) {
+      addRecentFolder(folder);
+      recentFolderLastFile[pathCompareKey(folder)] = file;
+      saveRecentFolderLastFile();
+    }
+  }
+  function removeRecentFile(filePath) {
+    const key = pathCompareKey(filePath);
+    recentFiles = recentFiles.filter((p) => pathCompareKey(p) !== key);
+    saveRecentArray(RECENT_FILES_KEY, recentFiles);
+  }
+  function setCurrentFolderListing(folderPath, files) {
+    currentFolderPath = String(folderPath || "").trim();
+    currentFolderFiles = Array.isArray(files) ? files.map((p) => String(p || "").trim()).filter(Boolean) : [];
+    renderCurrentFolderFiles();
+  }
+  function renderCurrentFolderFiles() {
+    if (sidebarFolderPathEl) {
+      sidebarFolderPathEl.textContent = currentFolderPath || "Open a folder to list all DXF files.";
+    }
+    if (!sidebarFolderFilesEl)
+      return;
+    sidebarFolderFilesEl.textContent = "";
+    if (!currentFolderPath) {
+      const emptyEl = document.createElement("div");
+      emptyEl.className = "recentEmpty";
+      emptyEl.textContent = "No active folder.";
+      sidebarFolderFilesEl.appendChild(emptyEl);
+      return;
+    }
+    if (!currentFolderFiles.length) {
+      const emptyEl = document.createElement("div");
+      emptyEl.className = "recentEmpty";
+      emptyEl.textContent = "No .dxf files in this folder.";
+      sidebarFolderFilesEl.appendChild(emptyEl);
+      return;
+    }
+    const activeKey = pathCompareKey(lastLoadedPath);
+    for (const filePath of currentFolderFiles) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "recentItem";
+      btn.title = filePath;
+      if (pathCompareKey(filePath) === activeKey) {
+        btn.setAttribute("data-active", "true");
+      }
+      const primary = document.createElement("div");
+      primary.className = "recentPrimary";
+      primary.textContent = pathBaseName(filePath) || filePath;
+      btn.appendChild(primary);
+      const secondary = document.createElement("div");
+      secondary.className = "recentSecondary";
+      secondary.textContent = filePath;
+      btn.appendChild(secondary);
+      btn.addEventListener("click", () => {
+        loadDxfFromPath(filePath).catch((e) => {
+          console.error(e);
+          setStatus(`Error: ${e?.message || e}`);
+        });
+      });
+      sidebarFolderFilesEl.appendChild(btn);
+    }
+  }
+  function renderRecentPanel(listEl, paths, kind) {
+    if (!listEl)
+      return;
+    listEl.textContent = "";
+    if (!paths.length) {
+      const emptyEl = document.createElement("div");
+      emptyEl.className = "recentEmpty";
+      emptyEl.textContent = kind === "file" ? "No recent files yet." : "No recent folders yet.";
+      listEl.appendChild(emptyEl);
+      return;
+    }
+    for (const fullPath of paths) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "recentItem";
+      btn.title = fullPath;
+      const primary = document.createElement("div");
+      primary.className = "recentPrimary";
+      primary.textContent = pathBaseName(fullPath) || fullPath;
+      btn.appendChild(primary);
+      const secondary = document.createElement("div");
+      secondary.className = "recentSecondary";
+      secondary.textContent = kind === "file" ? pathDirName(fullPath) : fullPath;
+      btn.appendChild(secondary);
+      btn.addEventListener("click", () => {
+        if (kind === "file") {
+          loadDxfFromPath(fullPath).catch((e) => {
+            console.error(e);
+            removeRecentFile(fullPath);
+            renderRecentLists();
+          });
+        } else {
+          openFolderByPath(fullPath).catch((e) => {
+            console.error(e);
+            setStatus(`Error: ${e?.message || e}`);
+          });
+        }
+      });
+      listEl.appendChild(btn);
+    }
+  }
+  function renderRecentLists() {
+    renderRecentPanel(welcomeRecentFilesEl, recentFiles, "file");
+    renderRecentPanel(sidebarRecentFilesEl, recentFiles, "file");
+    renderRecentPanel(welcomeRecentFoldersEl, recentFolders, "folder");
+    renderRecentPanel(sidebarRecentFoldersEl, recentFolders, "folder");
+    renderCurrentFolderFiles();
+  }
+  function initRecents() {
+    recentFiles = loadRecentArray(RECENT_FILES_KEY).slice(0, MAX_RECENT_FILES);
+    recentFolders = loadRecentArray(RECENT_FOLDERS_KEY).slice(0, MAX_RECENT_FOLDERS);
+    recentFolderLastFile = loadRecentFolderLastFile();
+    renderRecentLists();
+  }
   function getSavedTheme() {
     try {
       const t = localStorage.getItem("theme");
@@ -75436,7 +75663,10 @@ void main() {
       return;
     if (code === "KeyO" || key === "o" || key === "O") {
       e.preventDefault();
-      openDxfDialog();
+      if (e.shiftKey)
+        openFolderDialog();
+      else
+        openDxfDialog();
       return;
     }
     if (code === "Comma" || key === ",") {
@@ -75515,6 +75745,9 @@ void main() {
     const saved = getSavedLineThicknessState();
     const lvl = saved == null ? 0 : Number(saved);
     setLineThicknessLevel(Number.isFinite(lvl) ? lvl : 0);
+  })();
+  (function initRecentState() {
+    initRecents();
   })();
   function startMarkerDrag(axis, index) {
     markers.dragging = { axis, index };
@@ -75849,6 +76082,14 @@ void main() {
       openBtnStart.disabled = isBusy;
       openBtnStart.style.opacity = isBusy ? "0.6" : "1";
     }
+    if (openFolderBtn) {
+      openFolderBtn.disabled = isBusy;
+      openFolderBtn.style.opacity = isBusy ? "0.6" : "1";
+    }
+    if (openFolderBtnStart) {
+      openFolderBtnStart.disabled = isBusy;
+      openFolderBtnStart.style.opacity = isBusy ? "0.6" : "1";
+    }
   }
   function setUiHasFile(value) {
     hasLoadedFile = !!value;
@@ -75949,6 +76190,10 @@ void main() {
         openBtn.disabled = true;
       if (openBtnStart)
         openBtnStart.disabled = true;
+      if (openFolderBtn)
+        openFolderBtn.disabled = true;
+      if (openFolderBtnStart)
+        openFolderBtnStart.disabled = true;
       return false;
     }
     return true;
@@ -76359,7 +76604,7 @@ void main() {
       drawRulers();
       setStatus(lastLoadedPath ? `Loaded: ${lastLoadedPath}` : "Loaded");
     } else {
-      setStatus("Drag and drop a .dxf file or click Open.");
+      setStatus("Ready: drop a .dxf file or click Open file/folder.");
       drawRulers();
     }
   }
@@ -76382,6 +76627,8 @@ void main() {
         await new Promise((resolve) => requestAnimationFrame(() => resolve()));
       }
       await loadTextIntoViewer(text);
+      addRecentFile(filePath);
+      renderRecentLists();
       setStatus(`Loaded: ${filePath}`);
     } catch (e) {
       console.error(e);
@@ -76408,10 +76655,65 @@ void main() {
       setStatus(`Error: ${e?.message || e}`);
     }
   }
+  async function openFolderByPath(folderPath) {
+    try {
+      if (!assertBridge())
+        return;
+      if (typeof window.DXFAPP.listFolderDxf !== "function") {
+        setStatus("Error: folder listing is unavailable in this build.");
+        return;
+      }
+      const folder = String(folderPath || "").trim();
+      if (!folder)
+        return;
+      setStatus(`Scanning folder: ${folder}`);
+      const files = await window.DXFAPP.listFolderDxf(folder);
+      addRecentFolder(folder);
+      const folderFiles = Array.isArray(files) ? files : [];
+      setCurrentFolderListing(folder, folderFiles);
+      if (!folderFiles.length) {
+        renderRecentLists();
+        setStatus("No .dxf files found in selected folder.");
+        return;
+      }
+      const folderKey = pathCompareKey(folder);
+      const preferredPath = recentFolderLastFile[folderKey];
+      const selectedPath = folderFiles.find((p) => pathCompareKey(p) === pathCompareKey(preferredPath)) || folderFiles[0];
+      renderRecentLists();
+      await loadDxfFromPath(selectedPath);
+    } catch (e) {
+      console.error(e);
+      setStatus(`Error: ${e?.message || e}`);
+    }
+  }
+  async function openFolderDialog() {
+    try {
+      if (!assertBridge())
+        return;
+      if (typeof window.DXFAPP.pickFolder !== "function") {
+        setStatus("Error: folder picker is unavailable in this build.");
+        return;
+      }
+      if (hasLoadedFile)
+        setStatus("Opening folder dialog\u2026");
+      const folderPath = await window.DXFAPP.pickFolder();
+      if (folderPath)
+        await openFolderByPath(folderPath);
+      else if (hasLoadedFile)
+        setStatus("Canceled.");
+    } catch (e) {
+      console.error(e);
+      setStatus(`Error: ${e?.message || e}`);
+    }
+  }
   if (openBtn)
     openBtn.addEventListener("click", openDxfDialog);
   if (openBtnStart)
     openBtnStart.addEventListener("click", openDxfDialog);
+  if (openFolderBtn)
+    openFolderBtn.addEventListener("click", openFolderDialog);
+  if (openFolderBtnStart)
+    openFolderBtnStart.addEventListener("click", openFolderDialog);
   function isFileDrag(evt) {
     const types = evt.dataTransfer?.types;
     if (!types)
@@ -76447,7 +76749,7 @@ void main() {
     if (f?.path && f.path.toLowerCase().endsWith(".dxf")) {
       loadDxfFromPath(f.path);
     } else {
-      setStatus("Please drop a .dxf file.");
+      setStatus("Please drop a valid .dxf file.");
     }
   });
   var resizeRaf = 0;
@@ -76486,7 +76788,7 @@ void main() {
   }
   if (assertBridge()) {
     setUiHasFile(false);
-    setStatus("Drag and drop a .dxf file or click Open.");
+    setStatus("Ready: drop a .dxf file or click Open file/folder.");
   }
 })();
 /*! Bundled license information:

@@ -1,6 +1,6 @@
 {
-  "name": "dxf-viewer-local-app",
-  "version": "1.0.0",
+  "name": "dxf-viewer-plus",
+  "version": "1.1.0",
   "description": "Local DXF viewer (Electron) bundled with esbuild",
   "license": "MIT",
   "homepage": "https://abysstail.art",
@@ -25,8 +25,8 @@
     "esbuild": "^0.20.0"
   },
   "build": {
-    "appId": "local.dxf.viewer",
-    "productName": "DXF Viewer",
+    "appId": "local.dxf.viewer.plus",
+    "productName": "DXF Viewer Plus",
     "icon": "icon.png",
     "linux": {
       "target": [
@@ -37,8 +37,8 @@
       "maintainer": "Abyss Tail <abysstailcrafts@gmail.com>",
       "icon": "build/icons",
       "desktop": {
-        "Name": "DXF Viewer",
-        "StartupWMClass": "dxf-viewer-local-app"
+        "Name": "DXF Viewer Plus",
+        "StartupWMClass": "dxf-viewer-plus"
       }
     },
     "fileAssociations": [

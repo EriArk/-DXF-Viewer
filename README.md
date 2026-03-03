@@ -1,19 +1,22 @@
-# 🦊 DXF Viewer
+# DXF Viewer Plus
 
 A local desktop DXF viewer by **AbyssTail Designs**.
-Built with Electron for fast, offline viewing and quick measurements.
+Built with Electron for fast, offline viewing, quick measurements, and practical folder workflows.
 
 ## What It Does
-- Opens `.dxf` files from file picker or drag-and-drop
+- Opens `.dxf` files from file picker, folder picker, drag-and-drop, or recent lists
 - Displays drawings with zoom/pan controls
 - Supports Light and Dark themes
 - Includes rulers in millimeters
 - Supports draggable measurement guides with `ΔX` and `ΔY`
 - Optional snap-to-geometry for more precise guide placement
 - Adjustable rendered line thickness
+- Keeps recent files and recent folders
+- Shows all `.dxf` files from the currently opened folder in the sidebar
 
 ## Keyboard Shortcuts
-- `Ctrl+O`: Open DXF
+- `Ctrl+O`: Open file
+- `Ctrl+Shift+O`: Open folder
 - `Ctrl+,`: Toggle Settings
 - `Ctrl+R`: Toggle rulers
 - `Ctrl+F`: Fit drawing to view

@@ -15,57 +15,63 @@
         ">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🦊 DXF Viewer</title>
+  <title>DXF Viewer Plus</title>
 
   <style>
     :root{
-      --window-bg: #f6f5f4;
-      --surface:   #ffffff;
-      --surface-2: #f2f2f2;
-      --text:      #1e1e1e;
-      --muted:     #5e5c64;
-      --border:    #deddda;
-
-      --accent:    #3584e4;
-      --accent-txt:#ffffff;
-
-      --shadow:    0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
-      --ruler-bg:  #f1f1f1;
-      --ruler-line:#c7c7c7;
-      --ruler-text:#5e5c64;
-
-      /* Light theme: white background with dark lines */
-      --viewer-bg: #ffffff;
-      --drop-bg:   rgba(246,245,244,0.78);
+      --window-bg: #eef2f9;
+      --window-grad-a: #f8fbff;
+      --window-grad-b: #e9eef8;
+      --surface: #ffffff;
+      --surface-2: #f5f8ff;
+      --surface-3: #e9effb;
+      --text: #172235;
+      --muted: #5d6f8c;
+      --border: #cfdaf0;
+      --border-strong: #b6c8e8;
+      --accent: #2f6fe4;
+      --accent-txt: #ffffff;
+      --shadow: 0 14px 28px rgba(17, 39, 83, 0.11), 0 2px 10px rgba(17, 39, 83, 0.08);
+      --ruler-bg: #edf3ff;
+      --ruler-line: #c4d4ef;
+      --ruler-text: #5d6f8c;
+      --viewer-bg: #fcfdff;
+      --drop-bg: rgba(237, 243, 255, 0.82);
+      --radius-xl: 16px;
+      --radius-lg: 12px;
+      --radius-md: 10px;
+      --radius-sm: 8px;
+      --topbar-h: 64px;
+      --sidebar-w: 286px;
     }
 
     :root[data-theme="dark"]{
-      --window-bg: #1e1e1e;
-      --surface:   #2b2b2b;
-      --surface-2: #323232;
-      --text:      #f6f5f4;
-      --muted:     #c0bfbc;
-      --border:    #3a3a3a;
-
-      --accent:    #3584e4;
-      --accent-txt:#ffffff;
-
-      --shadow:    0 1px 2px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.35);
-      --ruler-bg:  #242424;
-      --ruler-line:#4a4a4a;
-      --ruler-text:#c0bfbc;
-
-      /* Dark theme: dark background */
-      --viewer-bg: #0d0d0d;
-      --drop-bg:   rgba(30,30,30,0.72);
+      --window-bg: #0e1626;
+      --window-grad-a: #101a2f;
+      --window-grad-b: #0b1425;
+      --surface: #14213b;
+      --surface-2: #1a2a4a;
+      --surface-3: #22365f;
+      --text: #dce8ff;
+      --muted: #95add6;
+      --border: #2c4270;
+      --border-strong: #3b568e;
+      --accent: #4b87ff;
+      --accent-txt: #f5f8ff;
+      --shadow: 0 20px 44px rgba(0, 0, 0, 0.42), 0 4px 16px rgba(0, 0, 0, 0.32);
+      --ruler-bg: #162544;
+      --ruler-line: #355382;
+      --ruler-text: #95add6;
+      --viewer-bg: #0a1326;
+      --drop-bg: rgba(12, 20, 38, 0.78);
     }
 
     html, body {
       margin: 0;
       height: 100%;
-      background: var(--window-bg);
+      background: linear-gradient(155deg, var(--window-grad-a), var(--window-grad-b));
       color: var(--text);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+      font-family: "Ubuntu", "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
       overflow: hidden;
     }
 
@@ -75,6 +81,8 @@
     #app-shell {
       width: 100%;
       height: 100%;
+      display: flex;
+      flex-direction: column;
     }
 
     #welcome {
@@ -84,6 +92,9 @@
       padding: 20px;
       box-sizing: border-box;
       position: relative;
+      background:
+        radial-gradient(circle at 16% 8%, rgba(75, 135, 255, 0.16), transparent 33%),
+        radial-gradient(circle at 88% 92%, rgba(75, 135, 255, 0.12), transparent 26%);
     }
 
     #welcome-toolbar {
@@ -94,40 +105,92 @@
 
     #welcome-card {
       display: grid;
-      gap: 12px;
-      justify-items: center;
-      padding: 10px;
-      min-width: 280px;
+      gap: 14px;
+      justify-items: stretch;
+      padding: 24px 26px;
+      width: min(920px, 96vw);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    #welcomeActions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     #openBtnStart {
       background: var(--accent);
       color: var(--accent-txt);
-      border-color: rgba(0,0,0,.10);
-      box-shadow: 0 1px 0 rgba(255,255,255,.20) inset;
-      font-size: 16px;
-      padding: 12px 20px;
+      border-color: color-mix(in srgb, var(--accent) 72%, #000 28%);
+      box-shadow: 0 1px 0 rgba(255,255,255,.22) inset;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      padding: 12px 18px;
+      min-width: 190px;
     }
     #openBtnStart:hover { filter: brightness(1.03); }
     #openBtnStart:active { filter: brightness(0.97); }
+    #openFolderBtnStart {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      padding: 12px 18px;
+      min-width: 190px;
+      background: var(--surface-2);
+      border-color: var(--border-strong);
+    }
 
     #welcome-sub {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       text-align: center;
+    }
+
+    #welcomeRecents {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
     }
 
     #topbar {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
-      padding: 10px 12px;
+      padding: 10px 14px;
       box-sizing: border-box;
+      position: relative;
+      z-index: 40;
+      overflow: visible;
 
-      height: 58px;
-      background: var(--surface);
+      height: var(--topbar-h);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
       border-bottom: 1px solid var(--border);
       box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    #appBrand {
+      display: inline-flex;
+      align-items: center;
+      height: 38px;
+      padding: 0 11px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      margin-right: 2px;
     }
 
     button {
@@ -135,53 +198,64 @@
       background: var(--surface);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 9px 14px;
-      border-radius: 12px;
+      padding: 9px 13px;
+      border-radius: var(--radius-md);
       cursor: pointer;
       user-select: none;
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1;
-      box-shadow: 0 1px 0 rgba(255,255,255,.10) inset;
+      box-shadow: 0 1px 0 rgba(255,255,255,.14) inset;
+      transition: background .16s ease, border-color .16s ease, transform .12s ease;
     }
-    button:hover { background: var(--surface-2); }
-    button:active { filter: brightness(0.97); }
+    button:hover { background: var(--surface-2); border-color: var(--border-strong); }
+    button:active { transform: translateY(1px); }
     button:disabled { cursor: default; opacity: 0.6; }
 
     #openBtn {
       background: var(--accent);
       color: var(--accent-txt);
-      border-color: rgba(0,0,0,.10);
+      border-color: color-mix(in srgb, var(--accent) 72%, #000 28%);
       box-shadow: 0 1px 0 rgba(255,255,255,.20) inset;
+      min-width: 88px;
+      font-weight: 600;
     }
     #openBtn:hover { filter: brightness(1.03); }
     #openBtn:active { filter: brightness(0.97); }
+    #openFolderBtn {
+      min-width: 112px;
+      font-weight: 600;
+    }
 
     #settingsWrap {
       position: relative;
+      z-index: 5;
     }
     #settingsBtn {
       padding: 9px 12px;
       min-width: 44px;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1;
     }
     #settingsMenu {
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      width: 220px;
+      width: 236px;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
-      padding: 10px;
+      padding: 12px;
       box-sizing: border-box;
-      z-index: 30;
+      z-index: 120;
       display: none;
-      gap: 10px;
+      gap: 12px;
     }
     #settingsWrap[data-open="true"] #settingsMenu {
       display: grid;
+    }
+    #settingsWrap[data-open="true"] {
+      z-index: 130;
     }
     .menuSection {
       display: grid;
@@ -190,10 +264,12 @@
     }
     .menuLabel {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 12px;
+      text-transform: uppercase;
       letter-spacing: .2px;
       justify-self: stretch;
       text-align: center;
+      font-weight: 600;
     }
     #menuActions {
       width: 100%;
@@ -204,7 +280,7 @@
     .menuActionBtn {
       width: 100%;
       padding: 8px 0;
-      font-size: 14px;
+      font-size: 13px;
     }
     #lineThicknessSlider {
       width: 150px;
@@ -212,7 +288,7 @@
     }
     #lineLevel {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 12px;
       min-width: 26px;
       text-align: center;
       font-variant-numeric: tabular-nums;
@@ -226,8 +302,8 @@
     .themePickBtn {
       width: 100%;
       padding: 8px 0;
-      border-radius: 8px;
-      font-size: 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
       min-width: 0;
     }
     .themePickBtn[data-active="true"] {
@@ -242,11 +318,15 @@
 
     #status {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 75vw;
+      max-width: 45vw;
     }
     #rulerBtn {
       min-width: 44px;
@@ -265,7 +345,7 @@
       gap: 10px;
       background: var(--surface-2);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 7px 10px;
       max-width: 460px;
       overflow: hidden;
@@ -282,7 +362,7 @@
       align-items: center;
       gap: 6px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       user-select: none;
     }
     #guideToggle {
@@ -296,7 +376,7 @@
       align-items: center;
       gap: 6px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       user-select: none;
     }
     #snapToggle {
@@ -307,7 +387,7 @@
     }
     #measureInfo {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
@@ -328,19 +408,140 @@
       pointer-events: none;
     }
 
+    #workspace {
+      position: relative;
+      display: flex;
+      min-height: 0;
+      flex: 1;
+      z-index: 1;
+    }
+
+    #sidebar {
+      width: var(--sidebar-w);
+      border-right: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: inset -1px 0 0 color-mix(in srgb, var(--border) 45%, transparent);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      padding: 12px;
+      box-sizing: border-box;
+      min-height: 0;
+    }
+    #sidebarHead {
+      font-size: 12px;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 2px 2px 0;
+    }
+    #sidebarContent {
+      min-height: 0;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .recentPanel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(255,255,255,.14) inset;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      min-height: 0;
+    }
+    .recentTitle {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      font-weight: 700;
+    }
+    .recentList {
+      min-height: 34px;
+      max-height: 210px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+    }
+    .recentItem {
+      width: 100%;
+      text-align: left;
+      display: grid;
+      gap: 2px;
+      padding: 8px 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      cursor: pointer;
+    }
+    .recentItem:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-3);
+    }
+    .recentItem[data-active="true"] {
+      border-color: color-mix(in srgb, var(--accent) 74%, var(--border-strong) 26%);
+      background: color-mix(in srgb, var(--surface-3) 70%, var(--accent) 30%);
+    }
+    .recentPrimary {
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+    .recentSecondary {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .recentEmpty {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    #sidebarFolderPath {
+      font-size: 11px;
+      line-height: 1.25;
+      color: var(--muted);
+      word-break: break-word;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface-2);
+      padding: 7px 8px;
+    }
+    #sidebarFolderFiles {
+      max-height: 320px;
+    }
+
     #viewer-wrap {
       position: relative;
-      width: 100%;
-      height: calc(100% - 58px);
+      width: auto;
+      height: 100%;
+      flex: 1;
       background: var(--window-bg);
       overflow: hidden;
       box-sizing: border-box;
-      padding: 12px;
+      padding: 14px;
+      background-image:
+        radial-gradient(circle at 2px 2px, color-mix(in srgb, var(--border) 32%, transparent) 1px, transparent 0);
+      background-size: 26px 26px;
     }
 
     #viewer-frame {
       position: absolute;
-      inset: 12px;
+      inset: 14px;
       --ruler-size: 22px;
     }
     body[data-rulers="off"] #viewer-frame { --ruler-size: 0px; }
@@ -352,8 +553,8 @@
       right: 0;
       bottom: 0;
       background: var(--viewer-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xl);
       overflow: hidden;
       box-shadow: var(--shadow);
     }
@@ -439,15 +640,15 @@
 
     #drop {
       position: absolute;
-      inset: 12px;
+      inset: 14px;
       display: none;
       place-items: center;
       background: var(--drop-bg);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 18px;
+      border-radius: var(--radius-xl);
+      font-size: 17px;
       text-align: center;
       z-index: 10;
     }
@@ -456,7 +657,7 @@
     #drop > div {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       padding: 16px 18px;
       box-shadow: var(--shadow);
       max-width: 520px;
@@ -485,7 +686,7 @@
       max-width: 92vw;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
       padding: 16px 16px 14px;
       box-sizing: border-box;
@@ -505,10 +706,10 @@
     }
     .hk {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 14px;
+      font-size: 13px;
       background: var(--surface-2);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       padding: 5px 8px;
       color: var(--text);
       white-space: nowrap;
@@ -544,7 +745,7 @@
       width: min(520px, 94vw);
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
       padding: 16px;
       box-sizing: border-box;
@@ -593,7 +794,7 @@
     .aboutSection {
       border: 1px solid var(--border);
       background: var(--surface-2);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 10px 12px;
       display: grid;
       gap: 7px;
@@ -629,24 +830,58 @@
       font-size: 18px;
       line-height: 1;
     }
+
+    @media (max-width: 1080px) {
+      #status { max-width: 34vw; }
+      #rulerPanel { max-width: 300px; }
+      #sidebar { width: 250px; }
+    }
+
+    @media (max-width: 900px) {
+      #welcomeRecents { grid-template-columns: 1fr; }
+      #workspace { flex-direction: column; }
+      #sidebar {
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        grid-template-rows: auto 1fr;
+        max-height: 290px;
+      }
+      #status { display: none; }
+    }
   </style>
 </head>
 
 <body data-has-file="false">
   <div id="welcome">
     <div id="welcome-toolbar">
-      <button id="themeBtnStart" title="Toggle theme" aria-label="Toggle theme">🌙</button>
+      <button id="themeBtnStart" title="Toggle theme" aria-label="Toggle theme">◐</button>
     </div>
     <div id="welcome-card">
-      <button id="openBtnStart">Open DXF…</button>
-      <div id="welcome-sub">Drag and drop a .dxf file here or click Open DXF…</div>
+      <div id="welcomeActions">
+        <button id="openBtnStart">Open file</button>
+        <button id="openFolderBtnStart">Open folder</button>
+      </div>
+      <div id="welcome-sub">Drop a <b>.dxf</b> file here or open it manually</div>
+      <div id="welcomeRecents">
+        <div class="recentPanel">
+          <div class="recentTitle">Recent files</div>
+          <div id="welcomeRecentFiles" class="recentList"></div>
+        </div>
+        <div class="recentPanel">
+          <div class="recentTitle">Recent folders</div>
+          <div id="welcomeRecentFolders" class="recentList"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="app-shell">
     <div id="topbar">
-      <button id="openBtn">Open</button>
-      <div id="status">Drag and drop a .dxf file here or click Open.</div>
+      <div id="appBrand">DXF Viewer Plus</div>
+      <button id="openBtn">Open file</button>
+      <button id="openFolderBtn">Open folder</button>
+      <div id="status">Ready: open a DXF file or folder to start.</div>
 
       <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
         <button id="rulerBtn" title="Toggle rulers" aria-label="Toggle rulers">📏</button>
@@ -690,25 +925,46 @@
       </div>
     </div>
 
-    <div id="viewer-wrap">
-      <div id="viewer-frame">
-        <div id="ruler-corner" aria-hidden="true"></div>
-        <canvas id="ruler-top" aria-hidden="true"></canvas>
-        <canvas id="ruler-left" aria-hidden="true"></canvas>
-        <div id="viewer">
-          <div id="measure-overlay" aria-hidden="true">
-            <div id="guide-v1" class="guide-line v"></div>
-            <div id="guide-v2" class="guide-line v"></div>
-            <div id="guide-h1" class="guide-line h"></div>
-            <div id="guide-h2" class="guide-line h"></div>
+    <div id="workspace">
+      <aside id="sidebar">
+        <div id="sidebarHead">Quick access</div>
+        <div id="sidebarContent">
+          <div class="recentPanel">
+            <div class="recentTitle">Folder files</div>
+            <div id="sidebarFolderPath">Open a folder to list all DXF files.</div>
+            <div id="sidebarFolderFiles" class="recentList"></div>
+          </div>
+          <div class="recentPanel">
+            <div class="recentTitle">Recent files</div>
+            <div id="sidebarRecentFiles" class="recentList"></div>
+          </div>
+          <div class="recentPanel">
+            <div class="recentTitle">Recent folders</div>
+            <div id="sidebarRecentFolders" class="recentList"></div>
           </div>
         </div>
-      </div>
+      </aside>
 
-      <div id="drop">
-        <div>
-          Drag and drop a <b>.dxf</b> file here
-          <div class="sub">or click the <b>Open DXF…</b> button</div>
+      <div id="viewer-wrap">
+        <div id="viewer-frame">
+          <div id="ruler-corner" aria-hidden="true"></div>
+          <canvas id="ruler-top" aria-hidden="true"></canvas>
+          <canvas id="ruler-left" aria-hidden="true"></canvas>
+          <div id="viewer">
+            <div id="measure-overlay" aria-hidden="true">
+              <div id="guide-v1" class="guide-line v"></div>
+              <div id="guide-v2" class="guide-line v"></div>
+              <div id="guide-h1" class="guide-line h"></div>
+              <div id="guide-h2" class="guide-line h"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="drop">
+          <div>
+            Drag and drop a <b>.dxf</b> file here
+            <div class="sub">or click the <b>Open file</b> button</div>
+          </div>
         </div>
       </div>
     </div>
@@ -719,7 +975,8 @@
       <button id="helpCloseBtn" type="button" aria-label="Close">×</button>
       <div id="helpTitle">Keyboard Shortcuts</div>
       <div id="helpKeys">
-        <div class="hk">Ctrl+O</div><div class="hd">Open DXF file</div>
+        <div class="hk">Ctrl+O</div><div class="hd">Open file dialog</div>
+        <div class="hk">Ctrl+Shift+O</div><div class="hd">Open folder dialog</div>
         <div class="hk">Ctrl+,</div><div class="hd">Toggle Settings menu</div>
         <div class="hk">Ctrl+R</div><div class="hd">Toggle rulers</div>
         <div class="hk">Ctrl+F</div><div class="hd">Fit drawing to view</div>
@@ -738,7 +995,7 @@
         <img id="aboutLogo" src="./assets/abyss-logo.png" alt="AbyssTail Designs logo" />
         <div class="aboutBrandMain">AbyssTail Designs</div>
         <div class="aboutBrandSub">Lazar Stafeev</div>
-        <div class="aboutBrandSub">🦊 DXF Viewer · Version 1.0.0</div>
+        <div class="aboutBrandSub">DXF Viewer Plus · Version 1.1.0</div>
       </div>
       <div id="aboutSections">
         <div class="aboutSection">
