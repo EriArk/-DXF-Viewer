@@ -15,7 +15,7 @@
         ">
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DXF Viewer Plus</title>
+  <title>DXF Viewer</title>
 
   <style>
     :root{
@@ -77,6 +77,8 @@
 
     body[data-has-file="false"] #app-shell { display: none; }
     body[data-has-file="true"] #welcome { display: none; }
+    body[data-edition="base"] [data-plus-only="true"] { display: none !important; }
+    body[data-edition="base"] #welcomeRecents { grid-template-columns: 1fr; }
 
     #app-shell {
       width: 100%;
@@ -174,23 +176,6 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-    }
-
-    #appBrand {
-      display: inline-flex;
-      align-items: center;
-      height: 38px;
-      padding: 0 11px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .35px;
-      text-transform: uppercase;
-      white-space: nowrap;
-      margin-right: 2px;
     }
 
     button {
@@ -852,7 +837,7 @@
   </style>
 </head>
 
-<body data-has-file="false">
+<body data-has-file="false" data-edition="base">
   <div id="welcome">
     <div id="welcome-toolbar">
       <button id="themeBtnStart" title="Toggle theme" aria-label="Toggle theme">◐</button>
@@ -860,7 +845,7 @@
     <div id="welcome-card">
       <div id="welcomeActions">
         <button id="openBtnStart">Open file</button>
-        <button id="openFolderBtnStart">Open folder</button>
+        <button id="openFolderBtnStart" data-plus-only="true">Open folder</button>
       </div>
       <div id="welcome-sub">Drop a <b>.dxf</b> file here or open it manually</div>
       <div id="welcomeRecents">
@@ -868,7 +853,7 @@
           <div class="recentTitle">Recent files</div>
           <div id="welcomeRecentFiles" class="recentList"></div>
         </div>
-        <div class="recentPanel">
+        <div class="recentPanel" data-plus-only="true">
           <div class="recentTitle">Recent folders</div>
           <div id="welcomeRecentFolders" class="recentList"></div>
         </div>
@@ -878,10 +863,9 @@
 
   <div id="app-shell">
     <div id="topbar">
-      <div id="appBrand">DXF Viewer Plus</div>
       <button id="openBtn">Open file</button>
-      <button id="openFolderBtn">Open folder</button>
-      <div id="status">Ready: open a DXF file or folder to start.</div>
+      <button id="openFolderBtn" data-plus-only="true">Open folder</button>
+      <div id="status">Ready: open a DXF file to start.</div>
 
       <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
         <button id="rulerBtn" title="Toggle rulers" aria-label="Toggle rulers">📏</button>
@@ -929,7 +913,7 @@
       <aside id="sidebar">
         <div id="sidebarHead">Quick access</div>
         <div id="sidebarContent">
-          <div class="recentPanel">
+          <div class="recentPanel" data-plus-only="true">
             <div class="recentTitle">Folder files</div>
             <div id="sidebarFolderPath">Open a folder to list all DXF files.</div>
             <div id="sidebarFolderFiles" class="recentList"></div>
@@ -938,7 +922,7 @@
             <div class="recentTitle">Recent files</div>
             <div id="sidebarRecentFiles" class="recentList"></div>
           </div>
-          <div class="recentPanel">
+          <div class="recentPanel" data-plus-only="true">
             <div class="recentTitle">Recent folders</div>
             <div id="sidebarRecentFolders" class="recentList"></div>
           </div>
@@ -976,7 +960,7 @@
       <div id="helpTitle">Keyboard Shortcuts</div>
       <div id="helpKeys">
         <div class="hk">Ctrl+O</div><div class="hd">Open file dialog</div>
-        <div class="hk">Ctrl+Shift+O</div><div class="hd">Open folder dialog</div>
+        <div class="hk" data-plus-only="true">Ctrl+Shift+O</div><div class="hd" data-plus-only="true">Open folder dialog</div>
         <div class="hk">Ctrl+,</div><div class="hd">Toggle Settings menu</div>
         <div class="hk">Ctrl+R</div><div class="hd">Toggle rulers</div>
         <div class="hk">Ctrl+F</div><div class="hd">Fit drawing to view</div>
@@ -995,7 +979,7 @@
         <img id="aboutLogo" src="./assets/abyss-logo.png" alt="AbyssTail Designs logo" />
         <div class="aboutBrandMain">AbyssTail Designs</div>
         <div class="aboutBrandSub">Lazar Stafeev</div>
-        <div class="aboutBrandSub">DXF Viewer Plus · Version 1.1.0</div>
+        <div id="aboutVersion" class="aboutBrandSub">DXF Viewer · Version 1.2.0</div>
       </div>
       <div id="aboutSections">
         <div class="aboutSection">

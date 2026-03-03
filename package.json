@@ -1,6 +1,6 @@
 {
-  "name": "dxf-viewer-plus",
-  "version": "1.1.0",
+  "name": "dxf-viewer",
+  "version": "1.2.0",
   "description": "Local DXF viewer (Electron) bundled with esbuild",
   "license": "MIT",
   "homepage": "https://abysstail.art",
@@ -13,7 +13,10 @@
   "scripts": {
     "build:renderer": "esbuild renderer-src.js --bundle --platform=browser --format=iife --outfile=renderer.js",
     "start": "npm run build:renderer && electron .",
-    "dist": "npm run build:renderer && electron-builder"
+    "start:plus": "npm run build:renderer && DXF_VIEWER_EDITION=plus electron .",
+    "dist": "npm run dist:viewer",
+    "dist:viewer": "npm run build:renderer && electron-builder --linux deb --config.extraMetadata.name=dxf-viewer --config.productName='DXF Viewer' --config.appId=local.dxf.viewer --config.linux.desktop.Name='DXF Viewer' --config.linux.desktop.StartupWMClass=dxf-viewer --config.directories.output=dist/viewer",
+    "dist:plus": "npm run build:renderer && electron-builder --linux deb --config.extraMetadata.name=dxf-viewer-plus --config.productName='DXF Viewer Plus' --config.appId=local.dxf.viewer.plus --config.linux.desktop.Name='DXF Viewer Plus' --config.linux.desktop.StartupWMClass=dxf-viewer-plus --config.directories.output=dist/plus"
   },
   "dependencies": {
     "dxf-viewer": "^1.0.0",
@@ -25,9 +28,16 @@
     "esbuild": "^0.20.0"
   },
   "build": {
-    "appId": "local.dxf.viewer.plus",
-    "productName": "DXF Viewer Plus",
+    "appId": "local.dxf.viewer",
+    "productName": "DXF Viewer",
     "icon": "icon.png",
+    "files": [
+      "**/*",
+      "!dist{,/**}",
+      "!.git{,/**}",
+      "!.tmp{,/**}",
+      "!build{,/**}"
+    ],
     "linux": {
       "target": [
         "AppImage",
@@ -37,8 +47,8 @@
       "maintainer": "Abyss Tail <abysstailcrafts@gmail.com>",
       "icon": "build/icons",
       "desktop": {
-        "Name": "DXF Viewer Plus",
-        "StartupWMClass": "dxf-viewer-plus"
+        "Name": "DXF Viewer",
+        "StartupWMClass": "dxf-viewer"
       }
     },
     "fileAssociations": [

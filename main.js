@@ -7,6 +7,9 @@ const fs = require("fs");
 // app.commandLine.appendSwitch("ignore-gpu-blacklist");
 
 let pendingOpenPath = null;
+const ENV_EDITION = String(process.env.DXF_VIEWER_EDITION || "").trim().toLowerCase();
+const NAME_EDITION = app.getName().toLowerCase().includes("plus") ? "plus" : "base";
+const APP_EDITION = ENV_EDITION === "plus" ? "plus" : NAME_EDITION;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -133,3 +136,6 @@ ipcMain.handle("list-folder-dxf", async (_evt, folderPath) => {
     .map((entry) => path.join(folderPath, entry.name))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 });
+
+// App edition: base | plus
+ipcMain.handle("get-app-edition", async () => APP_EDITION);

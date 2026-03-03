@@ -8,6 +8,7 @@ const openBtn = document.getElementById("openBtn");
 const openBtnStart = document.getElementById("openBtnStart");
 const openFolderBtn = document.getElementById("openFolderBtn");
 const openFolderBtnStart = document.getElementById("openFolderBtnStart");
+const aboutVersionEl = document.getElementById("aboutVersion");
 const dropEl = document.getElementById("drop");
 const welcomeRecentFilesEl = document.getElementById("welcomeRecentFiles");
 const welcomeRecentFoldersEl = document.getElementById("welcomeRecentFolders");
@@ -59,12 +60,17 @@ let recentFolders = [];
 let recentFolderLastFile = {};
 let currentFolderPath = "";
 let currentFolderFiles = [];
+let appEdition = "base";
 
 const RECENT_FILES_KEY = "recentFiles";
 const RECENT_FOLDERS_KEY = "recentFolders";
 const RECENT_FOLDER_LAST_FILE_KEY = "recentFolderLastFile";
 const MAX_RECENT_FILES = 12;
 const MAX_RECENT_FOLDERS = 10;
+
+function isPlusEdition() {
+  return appEdition === "plus";
+}
 
 const markers = {
   top: [60, 220],
@@ -73,6 +79,32 @@ const markers = {
   leftWorld: [null, null],
   dragging: null,
 };
+
+/* ---------------- App edition ---------------- */
+
+function applyEditionBranding() {
+  const plus = isPlusEdition();
+  const appName = plus ? "DXF Viewer Plus" : "DXF Viewer";
+  document.body.setAttribute("data-edition", plus ? "plus" : "base");
+  document.title = appName;
+  if (aboutVersionEl) aboutVersionEl.textContent = `${appName} · Version 1.2.0`;
+}
+
+async function initAppEdition() {
+  try {
+    const ed = await window.DXFAPP?.getAppEdition?.();
+    appEdition = String(ed || "").toLowerCase() === "plus" ? "plus" : "base";
+  } catch {
+    appEdition = "base";
+  }
+  applyEditionBranding();
+}
+
+function readyHintText() {
+  return isPlusEdition()
+    ? "Ready: drop a .dxf file or click Open file/folder."
+    : "Ready: drop a .dxf file or click Open file.";
+}
 
 /* ---------------- Recent files / folders ---------------- */
 
@@ -601,7 +633,10 @@ window.addEventListener("keydown", (e) => {
 
   if (code === "KeyO" || key === "o" || key === "O") {
     e.preventDefault();
-    if (e.shiftKey) openFolderDialog();
+    if (e.shiftKey) {
+      if (isPlusEdition()) openFolderDialog();
+      else setStatus("Open folder is available in DXF Viewer Plus.");
+    }
     else openDxfDialog();
     return;
   }
@@ -1566,7 +1601,7 @@ async function rebuildViewerAndRedraw() {
     drawRulers();
     setStatus(lastLoadedPath ? `Loaded: ${lastLoadedPath}` : "Loaded");
   } else {
-    setStatus("Ready: drop a .dxf file or click Open file/folder.");
+    setStatus(readyHintText());
     drawRulers();
   }
 }
@@ -1626,6 +1661,10 @@ async function openDxfDialog() {
 
 async function openFolderByPath(folderPath) {
   try {
+    if (!isPlusEdition()) {
+      setStatus("Open folder is available in DXF Viewer Plus.");
+      return;
+    }
     if (!assertBridge()) return;
     if (typeof window.DXFAPP.listFolderDxf !== "function") {
       setStatus("Error: folder listing is unavailable in this build.");
@@ -1660,6 +1699,10 @@ async function openFolderByPath(folderPath) {
 
 async function openFolderDialog() {
   try {
+    if (!isPlusEdition()) {
+      setStatus("Open folder is available in DXF Viewer Plus.");
+      return;
+    }
     if (!assertBridge()) return;
     if (typeof window.DXFAPP.pickFolder !== "function") {
       setStatus("Error: folder picker is unavailable in this build.");
@@ -1764,5 +1807,10 @@ if (window.DXFAPP && typeof window.DXFAPP.onOpenPath === "function") {
 
 if (assertBridge()) {
   setUiHasFile(false);
-  setStatus("Ready: drop a .dxf file or click Open file/folder.");
+  initAppEdition()
+    .catch(() => {})
+    .finally(() => {
+      setStatus(readyHintText());
+      renderRecentLists();
+    });
 }

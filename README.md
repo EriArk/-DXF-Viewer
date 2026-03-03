@@ -1,22 +1,40 @@
-# DXF Viewer Plus
+# DXF Viewer
 
-A local desktop DXF viewer by **AbyssTail Designs**.
-Built with Electron for fast, offline viewing, quick measurements, and practical folder workflows.
+Fast offline DXF viewing with practical measurement tools.
 
-## What It Does
-- Opens `.dxf` files from file picker, folder picker, drag-and-drop, or recent lists
-- Displays drawings with zoom/pan controls
-- Supports Light and Dark themes
-- Includes rulers in millimeters
-- Supports draggable measurement guides with `ΔX` and `ΔY`
-- Optional snap-to-geometry for more precise guide placement
-- Adjustable rendered line thickness
-- Keeps recent files and recent folders
-- Shows all `.dxf` files from the currently opened folder in the sidebar
+This project now ships in two editions from the same codebase:
+
+- `DXF Viewer` (standard): focused single-file workflow
+- `DXF Viewer Plus`: adds folder-based workflow and extended quick access panels
+
+## Choose Your Edition
+
+### DXF Viewer (Standard)
+- Open `.dxf` from file dialog, drag-and-drop, or recent files
+- Smooth zoom/pan viewer
+- Light/Dark theme
+- Rulers in millimeters
+- Draggable guide markers with `ΔX` / `ΔY` measurement
+- Optional snap-to-geometry for guide markers
+- Adjustable line thickness
+
+### DXF Viewer Plus
+Includes everything from Standard, plus:
+- Open a whole folder with `.dxf` files
+- Recent folders list
+- Sidebar list of all `.dxf` files in the active folder
+- Quick switching between files inside the current folder
+
+## What Changed In v1.2.0 (vs v1.1.0)
+- Split into two product editions: `DXF Viewer` and `DXF Viewer Plus`
+- Added edition-aware UI/branding and behavior
+- Kept folder workflow only in Plus edition
+- Improved topbar by removing duplicated app-name chip
+- Fixed packaging config to avoid oversized release artifacts
 
 ## Keyboard Shortcuts
 - `Ctrl+O`: Open file
-- `Ctrl+Shift+O`: Open folder
+- `Ctrl+Shift+O`: Open folder (Plus only)
 - `Ctrl+,`: Toggle Settings
 - `Ctrl+R`: Toggle rulers
 - `Ctrl+F`: Fit drawing to view
@@ -25,29 +43,35 @@ Built with Electron for fast, offline viewing, quick measurements, and practical
 - `Ctrl+X`: Close app window
 - `F1`: Open Help
 
-## Installation
+## Development
 ```bash
 npm install
-```
-
-## Run (Development)
-```bash
 npm start
 ```
 
+Run Plus edition:
+```bash
+npm run start:plus
+```
+
 ## Build Packages
+Standard edition:
+```bash
+npm run dist:viewer
+```
+
+Plus edition:
+```bash
+npm run dist:plus
+```
+
+Default `dist` command builds Standard:
 ```bash
 npm run dist
 ```
 
-## Tech Stack
-- Electron
-- dxf-viewer
-- three.js
-- esbuild
-
 ## Acknowledgements
-Special thanks to **Artyom Lebedev**, creator of the [`dxf-viewer`](https://github.com/vagran/dxf-viewer) library that powers core DXF rendering in this app.
+Special thanks to **Artyom Lebedev**, creator of [`dxf-viewer`](https://github.com/vagran/dxf-viewer), which powers core DXF rendering in this app.
 
 ## License
 MIT
