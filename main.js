@@ -8,8 +8,9 @@ const fs = require("fs");
 
 let pendingOpenPath = null;
 const ENV_EDITION = String(process.env.DXF_VIEWER_EDITION || "").trim().toLowerCase();
+const ARG_EDITION = process.argv.includes("--plus") ? "plus" : "";
 const NAME_EDITION = app.getName().toLowerCase().includes("plus") ? "plus" : "base";
-const APP_EDITION = ENV_EDITION === "plus" ? "plus" : NAME_EDITION;
+const APP_EDITION = ENV_EDITION === "plus" || ARG_EDITION === "plus" ? "plus" : NAME_EDITION;
 
 function createWindow() {
   const win = new BrowserWindow({
