@@ -71,10 +71,10 @@ Press **F1** for built-in help, or [report a bug / suggest an improvement](https
 
 ## For developers
 
-[Run from source and build Standard or Plus packages](docs/BUILDING.md).
+[Run from source and build Standard or Plus packages](docs/BUILDING.md) · [Contribute](CONTRIBUTING.md) · [Development guide](docs/DEVELOPMENT.md) · [Report a security concern](SECURITY.md).
 
 ## Acknowledgements and license
 
 Special thanks to **Artyom Lebedev**, creator of [dxf-viewer](https://github.com/vagran/dxf-viewer), which powers the app's DXF rendering.
 
-DXF Viewer is licensed under **[MIT](LICENSE)**.
+DXF Viewer's own application code is licensed under **[MIT](LICENSE)**. Dependencies retain their own licenses, including **MPL-2.0** for the dxf-viewer rendering library. See [third-party notices](THIRD_PARTY_NOTICES.md).
